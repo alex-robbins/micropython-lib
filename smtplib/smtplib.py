@@ -240,6 +240,7 @@ class SMTP:
         if host:
             (code, msg) = self.connect(host, port)
             if code != 220:
+                self.close()
                 raise SMTPConnectError(code, msg)
         if local_hostname is not None:
             self.local_hostname = local_hostname
@@ -376,6 +377,7 @@ class SMTP:
             if self.debuglevel > 0:
                 print('reply:', repr(line), file=stderr)
             if len(line) > _MAXLINE:
+                self.close()
                 raise SMTPResponseException(500, "Line too long.")
             resp.append(line[4:].strip(b' \t\r\n'))
             code = line[:3]
