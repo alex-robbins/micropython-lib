@@ -42,14 +42,10 @@ Example:
 # This was modified from the Python 1.5 library HTTP lib.
 
 import socket
-import io
 import re
 import email.utils
-import email.message
-import email.generator
 import base64
 import hmac
-import copy
 from email.base64mime import body_encode as encode_base64
 from sys import stderr
 
@@ -808,6 +804,11 @@ class SMTP:
         sendmail is called to transmit the message.
 
         """
+        import io
+        import copy
+        import email.utils
+        import email.generator
+
         # 'Resent-Date' is a mandatory field if the Message is resent (RFC 2822
         # Section 3.6.6). In such a case, we use the 'Resent-*' fields.  However,
         # if there is more than one 'Resent-' block there's no way to
