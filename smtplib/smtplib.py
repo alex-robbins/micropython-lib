@@ -755,8 +755,6 @@ class SMTP:
         if isinstance(msg, str):
             msg = _fix_eols(msg).encode('ascii')
         if self.does_esmtp:
-            # Hmmm? what's this? -ddm
-            # self.esmtp_features['7bit']=""
             if self.has_extn('size'):
                 esmtp_opts.append("size=%d" % len(msg))
             for option in mail_options:
