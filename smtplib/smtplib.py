@@ -248,17 +248,8 @@ class SMTP:
             # RFC 2821 says we should use the fqdn in the EHLO/HELO verb, and
             # if that can't be calculated, that we should use a domain literal
             # instead (essentially an encoded IP address like [A.B.C.D]).
-            fqdn = socket.getfqdn()
-            if '.' in fqdn:
-                self.local_hostname = fqdn
-            else:
-                # We can't find an fqdn hostname, so use a domain literal
-                addr = '127.0.0.1'
-                try:
-                    addr = socket.gethostbyname(socket.gethostname())
-                except socket.gaierror:
-                    pass
-                self.local_hostname = '[%s]' % addr
+            # We can't find an fqdn hostname, so use a domain literal
+            self.local_hostname = '[127.0.0.1]'
 
     def __enter__(self):
         return self
