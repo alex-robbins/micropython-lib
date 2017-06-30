@@ -165,8 +165,24 @@ def _quote_periods(bindata):
         bindata = b'.' + bindata
     return bindata.replace(b'\r\n.', b'\r\n..')
 
+def _find_bad_eol(data):
+    last = None
+    for i, c in enumerate(data):
+        if (last != '\r') and (c == '\n'):
+            return i
+        if (last == '\r') and (c != '\n'):
+            return i - 1
+        last = c
+    return len(data) - 1 if last == '\r' else None
+
 def _fix_eols(data):
-    return  re.sub(r'(?:\r\n|\n|\r(?!\n))', CRLF, data)
+    crlf_data = ''
+    while True:
+        i = _find_bad_eol(data)
+        if i is None:
+            return crlf_data + data
+        crlf_data += data[:i] + CRLF
+        data = data[i + 1:]
 
 try:
     import ssl
