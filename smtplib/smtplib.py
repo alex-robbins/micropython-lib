@@ -60,7 +60,7 @@ CRLF = "\r\n"
 bCRLF = b"\r\n"
 _MAXLINE = 8192 # more than 8 times larger than RFC 821, 4.5.3
 
-OLDSTYLE_AUTH = re.compile(r"auth=(.*)", re.I)
+OLDSTYLE_AUTH = 'auth='
 
 # Exception classes used by this module.
 class SMTPException(Exception):
@@ -430,11 +430,10 @@ class SMTP:
             # 1) Else our SMTP feature parser gets confused.
             # 2) There are some servers that only advertise the auth methods we
             #    support using the old style.
-            auth_match = OLDSTYLE_AUTH.match(each)
-            if auth_match:
+            if each.lower().startswith(OLDSTYLE_AUTH):
                 # This doesn't remove duplicates, but that's no problem
                 self.esmtp_features["auth"] = self.esmtp_features.get("auth", "") \
-                        + " " + auth_match.groups(0)[0]
+                        + " " + each[len(OLDSTYLE_AUTH):]
                 continue
 
             # RFC 1869 requires a space between ehlo keyword and parameters.
