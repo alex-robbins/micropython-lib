@@ -157,13 +157,18 @@ def quotedata(data):
     Double leading '.', and change Unix newline '\\n', or Mac '\\r' into
     Internet CRLF end-of-line.
     """
-    return re.sub(r'(?m)^\.', '..',
-        re.sub(r'(?:\r\n|\n|\r(?!\n))', CRLF, data))
+    return _quote_periods(_fix_eols(data))
 
-def _quote_periods(bindata):
-    if bindata.startswith(b'.'):
-        bindata = b'.' + bindata
-    return bindata.replace(b'\r\n.', b'\r\n..')
+def _quote_periods(data):
+    def apropos(bindata):
+        if isinstance(data, str):
+            return bindata.decode('ascii')
+        return bindata
+
+    period = apropos(b'.')
+    if data.startswith(period):
+        data = period + data
+    return data.replace(apropos(b'\r\n.'), apropos(b'\r\n..'))
 
 def _find_bad_eol(data):
     last = None
