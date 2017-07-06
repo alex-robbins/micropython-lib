@@ -42,7 +42,6 @@ Example:
 # This was modified from the Python 1.5 library HTTP lib.
 
 import socket
-import re
 import email.utils
 import base64
 import hmac
