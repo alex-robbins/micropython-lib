@@ -42,9 +42,8 @@ Example:
 # This was modified from the Python 1.5 library HTTP lib.
 
 import socket
-import base64
+import ubinascii as binascii
 import hmac
-from email.base64mime import body_encode as encode_base64
 from sys import stderr
 
 __all__ = ["SMTPException", "SMTPServerDisconnected", "SMTPResponseException",
@@ -608,16 +607,18 @@ class SMTP:
          SMTPException            No suitable authentication method was
                                   found.
         """
+        def encode_base64(s):
+            return binascii.b2a_base64(s.encode('ascii'))[:-1].decode('ascii')
 
         def encode_cram_md5(challenge, user, password):
-            challenge = base64.decodebytes(challenge)
+            challenge = binascii.a2b_base64(challenge)
             response = user + " " + hmac.HMAC(password.encode('ascii'),
                                               challenge).hexdigest()
-            return encode_base64(response.encode('ascii'), eol='')
+            return encode_base64(response)
 
         def encode_plain(user, password):
             s = "\0%s\0%s" % (user, password)
-            return encode_base64(s.encode('ascii'), eol='')
+            return encode_base64(s)
 
         AUTH_PLAIN = "PLAIN"
         AUTH_CRAM_MD5 = "CRAM-MD5"
@@ -655,9 +656,9 @@ class SMTP:
                     AUTH_PLAIN + " " + encode_plain(user, password))
             elif authmethod == AUTH_LOGIN:
                 (code, resp) = self.docmd("AUTH",
-                    "%s %s" % (AUTH_LOGIN, encode_base64(user.encode('ascii'), eol='')))
+                    "%s %s" % (AUTH_LOGIN, encode_base64(user)))
                 if code == 334:
-                    (code, resp) = self.docmd(encode_base64(password.encode('ascii'), eol=''))
+                    (code, resp) = self.docmd(encode_base64(password))
 
             # 235 == 'Authentication successful'
             # 503 == 'Error: already authenticated'
