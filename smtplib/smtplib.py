@@ -42,7 +42,6 @@ Example:
 # This was modified from the Python 1.5 library HTTP lib.
 
 import socket
-import email.utils
 import base64
 import hmac
 from email.base64mime import body_encode as encode_base64
@@ -134,7 +133,7 @@ def quoteaddr(addrstring):
 
     Should be able to handle anything email.utils.parseaddr can handle.
     """
-    displayname, addr = email.utils.parseaddr(addrstring)
+    displayname, addr = _parseaddr(addrstring)
     if (displayname, addr) == ('', ''):
         # parseaddr couldn't parse it, use it as is and hope for the best.
         if addrstring.strip().startswith('<'):
@@ -143,11 +142,22 @@ def quoteaddr(addrstring):
     return "<%s>" % addr
 
 def _addr_only(addrstring):
-    displayname, addr = email.utils.parseaddr(addrstring)
+    displayname, addr = _parseaddr(addrstring)
     if (displayname, addr) == ('', ''):
         # parseaddr couldn't parse it, so use it as is.
         return addrstring
     return addr
+
+try:
+    import email.utils
+except ImportError:
+    def _parseaddr(addrstring):
+        # This is what email.utils.parseaddr does when it can't parse the
+        # addrstring.
+        displayname, addr = ('', '')
+        return displayname, addr
+else:
+    _parseaddr = email.utils.parseaddr
 
 # Legacy method kept for backward compatibility.
 def quotedata(data):
