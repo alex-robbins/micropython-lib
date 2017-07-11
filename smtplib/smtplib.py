@@ -56,6 +56,7 @@ SMTP_SSL_PORT = 465
 CRLF = "\r\n"
 bCRLF = b"\r\n"
 _MAXLINE = 8192 # more than 8 times larger than RFC 821, 4.5.3
+_GLOBAL_DEFAULT_TIMEOUT = object()
 
 OLDSTYLE_AUTH = 'auth='
 
@@ -197,6 +198,24 @@ def _fix_eols(data):
         crlf_data += data[:i] + CRLF
         data = data[i + 1:]
 
+def _create_connection(address, timeout, source_address):
+    sock = None
+    err = None
+    for family, _, _, _, sockaddr in socket.getaddrinfo(*address):
+        try:
+            sock = socket.socket(family, socket.SOCK_STREAM)
+            if timeout is not _GLOBAL_DEFAULT_TIMEOUT:
+                sock.settimeout(timeout)
+            if source_address:
+                sock.bind(source_address)
+            sock.connect(sockaddr)
+            return sock
+        except OSError as e:
+            err = e
+            if sock is not None:
+                sock.close()
+    raise err or OSError("getaddrinfo returns an empty list")
+
 try:
     import ssl
 except ImportError:
@@ -243,7 +262,7 @@ class SMTP:
     default_port = SMTP_PORT
 
     def __init__(self, host='', port=0, local_hostname=None,
-                 timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
+                 timeout=_GLOBAL_DEFAULT_TIMEOUT,
                  source_address=None):
         """Initialize a new instance.
 
@@ -306,7 +325,7 @@ class SMTP:
         if self.debuglevel > 0:
             print('connect: to', (host, port), self.source_address,
                                  file=stderr)
-        return socket.create_connection((host, port), timeout,
+        return _create_connection((host, port), timeout,
                                         self.source_address)
 
     def connect(self, host='localhost', port=0, source_address=None):
@@ -923,7 +942,7 @@ if _have_ssl:
 
         def __init__(self, host='', port=0, local_hostname=None,
                      keyfile=None, certfile=None,
-                     timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
+                     timeout=_GLOBAL_DEFAULT_TIMEOUT,
                      source_address=None, context=None):
             if context is not None and keyfile is not None:
                 raise ValueError("context and keyfile arguments are mutually "
@@ -940,7 +959,7 @@ if _have_ssl:
         def _get_socket(self, host, port, timeout):
             if self.debuglevel > 0:
                 print('connect:', (host, port), file=stderr)
-            new_socket = socket.create_connection((host, port), timeout,
+            new_socket = _create_connection((host, port), timeout,
                     self.source_address)
             if self.context is not None:
                 new_socket = self.context.wrap_socket(new_socket)
