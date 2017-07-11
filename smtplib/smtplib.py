@@ -963,7 +963,8 @@ class LMTP(SMTP):
     LMTP, so our connect() method must support that as well as a regular
     host:port server.  local_hostname and source_address have the same
     meaning as they do in the SMTP class.  To specify a Unix socket,
-    you must use an absolute path as the host, starting with a '/'.
+    you must use a bytes or bytearray object as the host, suitable for
+    passing to usocket.connect.
 
     Authentication is supported, using the regular SMTP mechanism. When
     using a Unix socket, LMTP generally don't support or require any
@@ -979,7 +980,7 @@ class LMTP(SMTP):
 
     def connect(self, host='localhost', port=0, source_address=None):
         """Connect to the LMTP daemon, on either a Unix or a TCP socket."""
-        if host[0] != '/':
+        if not isinstance(host, (bytes, bytearray)):
             return SMTP.connect(self, host, port, source_address=source_address)
 
         # Handle Unix-domain sockets.
