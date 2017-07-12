@@ -370,7 +370,9 @@ class SMTP:
             if isinstance(s, str):
                 s = s.encode("ascii")
             try:
-                self.sock.sendall(s)
+                while s:
+                    i = self.sock.send(s)
+                    s = s[i:]
             except OSError:
                 self.close()
                 raise SMTPServerDisconnected('Server not connected')
