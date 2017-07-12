@@ -325,8 +325,9 @@ class SMTP:
         if self.debuglevel > 0:
             print('connect: to', (host, port), self.source_address,
                                  file=stderr)
-        return _create_connection((host, port), timeout,
+        new_socket = _create_connection((host, port), timeout,
                                         self.source_address)
+        return new_socket, new_socket.makefile('rb')
 
     def connect(self, host='localhost', port=0, source_address=None):
         """Connect to a host on a given port.
@@ -355,8 +356,7 @@ class SMTP:
             port = self.default_port
         if self.debuglevel > 0:
             print('connect:', (host, port), file=stderr)
-        self.sock = self._get_socket(host, port, self.timeout)
-        self.file = None
+        self.sock, self.file = self._get_socket(host, port, self.timeout)
         (code, msg) = self.getreply()
         if self.debuglevel > 0:
             print("connect:", msg, file=stderr)
@@ -371,7 +371,7 @@ class SMTP:
                 s = s.encode("ascii")
             try:
                 while s:
-                    i = self.sock.send(s)
+                    i = self.file.write(s)
                     s = s[i:]
             except OSError:
                 self.close()
@@ -401,8 +401,6 @@ class SMTP:
         Raises SMTPServerDisconnected if end-of-file is reached.
         """
         resp = []
-        if self.file is None:
-            self.file = self.sock.makefile('rb')
         while 1:
             try:
                 line = self.file.readline(_MAXLINE + 1)
@@ -726,7 +724,7 @@ class SMTP:
                 self.sock = context.wrap_socket(self.sock)
             else:
                 self.sock = ssl.wrap_socket(self.sock, keyfile, certfile)
-            self.file = None
+            self.file = self.sock
             # RFC 3207:
             # The client MUST discard any knowledge obtained from
             # the server, such as the list of SMTP service extensions,
@@ -967,7 +965,7 @@ if _have_ssl:
                 new_socket = self.context.wrap_socket(new_socket)
             else:
                 new_socket = ssl.wrap_socket(new_socket, self.keyfile, self.certfile)
-            return new_socket
+            return new_socket, new_socket
 
     __all__.append("SMTP_SSL")
 
@@ -1007,7 +1005,7 @@ class LMTP(SMTP):
         # Handle Unix-domain sockets.
         try:
             self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            self.file = None
+            self.file = self.sock.makefile('rb')
             self.sock.connect(host)
         except OSError:
             if self.debuglevel > 0:
