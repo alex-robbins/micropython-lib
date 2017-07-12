@@ -41,7 +41,7 @@ Example:
 #
 # This was modified from the Python 1.5 library HTTP lib.
 
-import socket
+import usocket as socket
 import ubinascii as binascii
 import hmac
 from sys import stderr
