@@ -471,8 +471,11 @@ class SMTP:
             # It's actually stricter, in that only spaces are allowed between
             # parameters, but were not going to check for that here.  Note
             # that the space isn't present if there are no parameters.
-            feature, _, params = each.partition(' ')
-            feature = feature.lower()
+            sep = each.find(' ')
+            if sep == -1:
+                sep = len(each)
+            feature = each[:sep].lower()
+            params = each[sep + 1:]
             if feature == "auth":
                 self.esmtp_features[feature] = self.esmtp_features.get(feature, "") \
                         + " " + params
