@@ -1,3 +1,4 @@
-srctype=dummy
+srctype = cpython
 type=module
 version = 0.0.1
+depends = hmac
